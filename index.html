@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoofQuote Pro</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #263347;
+      --surface3: #334155;
+      --accent: #f97316;
+      --accent-dk: #ea6c0e;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --border: #2d3f55;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --r: 8px;
+      --r-lg: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+      padding: 0 16px;
+    }
+    .header-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; height: 58px; gap: 12px;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 9px;
+      font-size: 17px; font-weight: 700; color: var(--accent);
+      flex-shrink: 0;
+    }
+    .logo svg { flex-shrink: 0; }
+    nav { display: flex; gap: 4px; margin-left: auto; }
+    .nav-btn {
+      background: none; border: none; color: var(--muted);
+      padding: 7px 14px; border-radius: var(--r);
+      cursor: pointer; font-size: 13px; font-weight: 500;
+      transition: all .15s; white-space: nowrap; display: flex; align-items: center; gap: 6px;
+    }
+    .nav-btn:hover { background: var(--surface2); color: var(--text); }
+    .nav-btn.active { background: var(--accent); color: #fff; }
+    @media(max-width:520px) { .nav-btn .label { display: none; } .nav-btn { padding: 7px 10px; } }
+
+    /* ── MAIN ── */
+    main { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
+    .tab { display: none; }
+    .tab.active { display: block; }
+
+    /* ── SETUP SCREEN ── */
+    #setup {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: calc(100vh - 58px);
+      text-align: center; padding: 32px 16px;
+    }
+    #setup h2 { font-size: 22px; margin-bottom: 8px; }
+    #setup p { color: var(--muted); max-width: 580px; margin-bottom: 20px; }
+    .code-block {
+      background: #0a1020; border: 1px solid var(--border);
+      border-radius: var(--r); padding: 18px 20px;
+      text-align: left; font-family: 'Courier New', monospace;
+      font-size: 12px; white-space: pre; overflow-x: auto;
+      max-width: 680px; width: 100%; margin-bottom: 20px;
+      color: #7dd3fc; line-height: 1.7;
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: var(--r); border: none;
+      cursor: pointer; font-size: 13px; font-weight: 500;
+      transition: all .15s; text-decoration: none; white-space: nowrap;
+      font-family: inherit;
+    }
+    .btn:disabled { opacity: .45; cursor: not-allowed; pointer-events: none; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-dk); }
+    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--surface3); }
+    .btn-danger-outline { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+    .btn-danger-outline:hover { background: var(--danger); color: #fff; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-lg { padding: 11px 24px; font-size: 15px; }
+    .icon-btn {
+      background: transparent; border: none; color: var(--muted);
+      cursor: pointer; padding: 5px; border-radius: 6px;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: all .15s;
+    }
+    .icon-btn:hover { color: var(--danger); background: rgba(239,68,68,.12); }
+
+    /* ── SECTION HEADER ── */
+    .sec-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px; flex-wrap: wrap; gap: 12px;
+    }
+    .sec-title { font-size: 18px; font-weight: 600; }
+
+    /* ── SEARCH ── */
+    .search-wrap { position: relative; }
+    .search-wrap input { padding-left: 34px; }
+    .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+
+    /* ── INPUTS ── */
+    input, select, textarea {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--r); color: var(--text); padding: 9px 12px;
+      font-size: 14px; font-family: inherit; transition: border-color .15s;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+    input[type=number] { -moz-appearance: textfield; }
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 5px; }
+    .form-group { margin-bottom: 14px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media(max-width:580px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+    /* ── TABLE ── */
+    .tbl-wrap { overflow-x: auto; border-radius: var(--r-lg); border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      background: var(--surface2); padding: 10px 14px;
+      text-align: left; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+      white-space: nowrap;
+    }
+    tbody td { padding: 11px 14px; border-top: 1px solid var(--border); vertical-align: middle; }
+    tbody tr:hover td { background: rgba(255,255,255,.025); }
+
+    /* ── CARD ── */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px; }
+
+    /* ── TIER BADGES ── */
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 600;
+    }
+    .badge-std { background: rgba(148,163,184,.15); color: #94a3b8; }
+    .badge-prm { background: rgba(249,115,22,.15); color: #fb923c; }
+    .badge-ult { background: rgba(168,85,247,.15); color: #c084fc; }
+
+    /* ── TOTALS ── */
+    .totals-row {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 20px;
+    }
+    @media(max-width:520px) { .totals-row { grid-template-columns: 1fr; } }
+    .total-card {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 16px; text-align: center;
+    }
+    .total-card.std { border-top: 3px solid #94a3b8; }
+    .total-card.prm { border-top: 3px solid #f97316; }
+    .total-card.ult { border-top: 3px solid #a855f7; }
+    .total-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 4px; }
+    .total-amt { font-size: 26px; font-weight: 700; }
+    .total-card.std .total-amt { color: #94a3b8; }
+    .total-card.prm .total-amt { color: #fb923c; }
+    .total-card.ult .total-amt { color: #c084fc; }
+
+    /* ── MODAL ── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.72); z-index: 200;
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 24px;
+      width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto;
+    }
+    .modal-lg { max-width: 780px; }
+    .modal-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .modal-title { font-size: 17px; font-weight: 600; }
+    .modal-foot { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+    /* ── TOASTS ── */
+    #toasts { position: fixed; bottom: 20px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 11px 15px;
+      display: flex; align-items: center; gap: 9px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.35); max-width: 300px;
+      animation: slideIn .18s ease;
+    }
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.error   { border-left: 3px solid var(--danger); }
+    .toast.info    { border-left: 3px solid var(--accent); }
+    @keyframes slideIn { from { transform: translateX(110%); opacity: 0; } to { transform: none; opacity: 1; } }
+
+    /* ── MISC ── */
+    .empty {
+      text-align: center; padding: 48px 16px; color: var(--muted);
+    }
+    .empty-icon { font-size: 42px; margin-bottom: 10px; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+    .fw6 { font-weight: 600; }
+    .sm { font-size: 12px; color: var(--muted); }
+    .qty-input { width: 68px !important; text-align: center; }
+    .pill {
+      display: inline-flex; align-items: center;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 100px; padding: 2px 9px; font-size: 12px; color: var(--muted);
+    }
+    .add-item-row {
+      display: flex; gap: 10px; align-items: flex-end;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 14px;
+      margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .add-item-row .form-group { margin-bottom: 0; flex: 1; min-width: 160px; }
+    .add-item-row .form-group:last-child { flex: 0 0 auto; }
+    .est-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ SETUP SCREEN ══════════════ -->
+<div id="setup" style="display:none">
+  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="1.5" style="margin-bottom:16px">
+    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+  </svg>
+  <h2>Database Setup Required</h2>
+  <p>Run the SQL below in your <strong>Supabase SQL Editor</strong> to create the required tables, then click the button.</p>
+  <div class="code-block" id="setup-sql"></div>
+  <button class="btn btn-primary btn-lg" onclick="retrySetup()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+    I've run the SQL — Retry
+  </button>
+  <div id="setup-err" style="color:var(--danger);margin-top:14px;font-size:13px"></div>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="app" style="display:none">
+
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        RoofQuote Pro
+      </div>
+      <nav>
+        <button class="nav-btn active" data-tab="price-list" onclick="showTab('price-list')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <span class="label">Price List</span>
+        </button>
+        <button class="nav-btn" data-tab="new-estimate" onclick="showTab('new-estimate')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <span class="label">New Estimate</span>
+        </button>
+        <button class="nav-btn" data-tab="estimates" onclick="showTab('estimates')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span class="label">Estimates</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── TAB: PRICE LIST ── -->
+    <div class="tab active" id="tab-price-list">
+      <div class="sec-header">
+        <div class="sec-title">Price List</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <div class="search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="price-search" placeholder="Search items…" style="width:200px" oninput="renderPriceItems()">
+          </div>
+          <button class="btn btn-primary" onclick="openAddItem()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Item
+          </button>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Unit</th>
+              <th><span class="badge badge-std">Standard</span></th>
+              <th><span class="badge badge-prm">Premium</span></th>
+              <th><span class="badge badge-ult">Ultimate</span></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="price-tbody">
+            <tr><td colspan="6"><div class="empty"><div class="empty-icon">⏳</div>Loading…</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── TAB: NEW ESTIMATE ── -->
+    <div class="tab" id="tab-new-estimate">
+      <div class="sec-header">
+        <div class="sec-title">New Estimate</div>
+        <button class="btn btn-danger-outline btn-sm" onclick="clearEstimate()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          Clear
+        </button>
+      </div>
+
+      <!-- Customer info -->
+      <div class="card" style="margin-bottom:16px">
+        <div style="font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px">Customer Information</div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Customer Name *</label>
+            <input type="text" id="est-name" placeholder="John Smith">
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <input type="text" id="est-address" placeholder="123 Main St, City, ST">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Notes</label>
+          <textarea id="est-notes" rows="2" placeholder="Project notes, scope of work…" style="resize:vertical"></textarea>
+        </div>
+      </div>
+
+      <!-- Add item row -->
+      <div class="add-item-row">
+        <div class="form-group" style="flex:2;min-width:200px">
+          <label>Select Item</label>
+          <select id="item-select">
+            <option value="">— choose an item —</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:0 0 110px">
+          <label>Quantity</label>
+          <input type="number" id="item-qty" placeholder="1" min="0.01" step="0.01">
+        </div>
+        <div class="form-group">
+          <label style="opacity:0">add</label>
+          <button class="btn btn-primary" onclick="addLineItem()" style="width:100%">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add
+          </button>
+        </div>
+      </div>
+
+      <!-- Line items -->
+      <div id="line-items-wrap"></div>
+
+      <!-- Totals -->
+      <div class="totals-row">
+        <div class="total-card std">
+          <div class="total-lbl">Standard Total</div>
+          <div class="total-amt" id="tot-std">$0.00</div>
+        </div>
+        <div class="total-card prm">
+          <div class="total-lbl">Premium Total</div>
+          <div class="total-amt" id="tot-prm">$0.00</div>
+        </div>
+        <div class="total-card ult">
+          <div class="total-lbl">Ultimate Total</div>
+          <div class="total-amt" id="tot-ult">$0.00</div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:20px">
+        <button class="btn btn-primary btn-lg" id="save-btn" onclick="saveEstimate()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save Estimate
+        </button>
+      </div>
+    </div>
+
+    <!-- ── TAB: ESTIMATES ── -->
+    <div class="tab" id="tab-estimates">
+      <div class="sec-header">
+        <div class="sec-title">Saved Estimates</div>
+        <button class="btn btn-primary" onclick="showTab('new-estimate')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Estimate
+        </button>
+      </div>
+      <div id="estimates-wrap">
+        <div class="empty"><div class="empty-icon">⏳</div>Loading…</div>
+      </div>
+    </div>
+
+  </main>
+</div><!-- #app -->
+
+<!-- ══════════ MODAL: Add/Edit Price Item ══════════ -->
+<div class="overlay" id="modal-item">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="modal-item-title">Add Price Item</div>
+      <button class="icon-btn" onclick="closeModal('modal-item')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Item Name *</label>
+        <input type="text" id="fi-name" placeholder="e.g. Architectural Shingles">
+      </div>
+      <div class="form-group">
+        <label>Unit *</label>
+        <input type="text" id="fi-unit" placeholder="e.g. sq, hr, lin ft">
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="form-group">
+        <label>Standard Price *</label>
+        <input type="number" id="fi-std" placeholder="0.00" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Premium Price *</label>
+        <input type="number" id="fi-prm" placeholder="0.00" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Ultimate Price *</label>
+        <input type="number" id="fi-ult" placeholder="0.00" min="0" step="0.01">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('modal-item')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveItem()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Item
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL: View Estimate ══════════ -->
+<div class="overlay" id="modal-est">
+  <div class="modal modal-lg">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title" id="modal-est-title">Estimate</div>
+        <div class="sm" id="modal-est-date"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-secondary btn-sm" onclick="printEstimate()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print
+        </button>
+        <button class="icon-btn" onclick="closeModal('modal-est')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="modal-est-body"></div>
+  </div>
+</div>
+
+<!-- ══════════ TOASTS ══════════ -->
+<div id="toasts"></div>
+
+<script>
+const SUPABASE_URL = 'https://vrwhubcrcikyssprlscn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyd2h1YmNyY2lreXNzcHJsc2NuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MjM3NDQsImV4cCI6MjA5MTQ5OTc0NH0.SAvVivna6oNYSeIVezHaCf93xVS-Jb3ZRde4xAUBJf8';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const SETUP_SQL = `-- Run this in Supabase SQL Editor → New Query
+
+CREATE TABLE IF NOT EXISTS price_items (
+  id             uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  name           text NOT NULL,
+  unit           text NOT NULL,
+  standard_price numeric(10,2) NOT NULL DEFAULT 0,
+  premium_price  numeric(10,2) NOT NULL DEFAULT 0,
+  ultimate_price numeric(10,2) NOT NULL DEFAULT 0,
+  created_at     timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS estimates (
+  id             uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  customer_name  text NOT NULL,
+  address        text,
+  notes          text,
+  items          jsonb DEFAULT '[]'::jsonb,
+  standard_total numeric(10,2) DEFAULT 0,
+  premium_total  numeric(10,2) DEFAULT 0,
+  ultimate_total numeric(10,2) DEFAULT 0,
+  created_at     timestamptz DEFAULT now()
+);
+
+ALTER TABLE price_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE estimates   ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "public_all" ON price_items FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "public_all" ON estimates   FOR ALL USING (true) WITH CHECK (true);`;
+
+// ── STATE ──
+let priceItems = [];
+let estimates  = [];
+let lineItems  = [];   // current estimate being built
+let editingId  = null;
+let viewingEst = null;
+let tempId     = 0;
+
+// ── INIT ──
+async function init() {
+  document.getElementById('setup-sql').textContent = SETUP_SQL;
+  const ok = await checkTables();
+  if (ok) {
+    document.getElementById('app').style.display = 'block';
+    await Promise.all([loadPriceItems(), loadEstimates()]);
+    renderLineItems();
+  } else {
+    document.getElementById('setup').style.display = 'flex';
+  }
+}
+
+async function checkTables() {
+  const [r1, r2] = await Promise.all([
+    sb.from('price_items').select('id').limit(1),
+    sb.from('estimates').select('id').limit(1)
+  ]);
+  return !r1.error && !r2.error;
+}
+
+async function retrySetup() {
+  document.getElementById('setup-err').textContent = '';
+  const ok = await checkTables();
+  if (ok) {
+    document.getElementById('setup').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    await Promise.all([loadPriceItems(), loadEstimates()]);
+    renderLineItems();
+  } else {
+    document.getElementById('setup-err').textContent =
+      'Tables not found yet. Make sure you ran all the SQL and clicked Save/Run.';
+  }
+}
+
+// ── PRICE ITEMS ──
+async function loadPriceItems() {
+  const { data, error } = await sb.from('price_items').select('*').order('name');
+  if (error) { toast(error.message, 'error'); return; }
+  priceItems = data || [];
+  renderPriceItems();
+  populateSelect();
+}
+
+function renderPriceItems() {
+  const q = document.getElementById('price-search')?.value.toLowerCase() ?? '';
+  const rows = priceItems.filter(i => !q || i.name.toLowerCase().includes(q));
+  const tbody = document.getElementById('price-tbody');
+  if (!tbody) return;
+
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty">
+      <div class="empty-icon">${q ? '🔍' : '📋'}</div>
+      <div>${q ? 'No items match your search.' : 'No items yet — add your first price item!'}</div>
+    </div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(item => `
+    <tr>
+      <td class="fw6">${esc(item.name)}</td>
+      <td><span class="pill">${esc(item.unit)}</span></td>
+      <td style="color:#94a3b8;font-weight:600">$${fmt(item.standard_price)}</td>
+      <td style="color:#fb923c;font-weight:600">$${fmt(item.premium_price)}</td>
+      <td style="color:#c084fc;font-weight:600">$${fmt(item.ultimate_price)}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-secondary btn-sm" onclick="openEditItem('${item.id}')">Edit</button>
+          <button class="icon-btn" title="Delete" onclick="deleteItem('${item.id}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+              <path d="M10 11v6M14 11v6"/>
+            </svg>
+          </button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function populateSelect() {
+  const sel = document.getElementById('item-select');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— choose an item —</option>' +
+    priceItems.map(i => `<option value="${i.id}">${esc(i.name)} / ${esc(i.unit)}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+
+function openAddItem() {
+  editingId = null;
+  document.getElementById('modal-item-title').textContent = 'Add Price Item';
+  ['fi-name','fi-unit','fi-std','fi-prm','fi-ult'].forEach(id => document.getElementById(id).value = '');
+  openModal('modal-item');
+  document.getElementById('fi-name').focus();
+}
+
+function openEditItem(id) {
+  const item = priceItems.find(p => p.id === id);
+  if (!item) return;
+  editingId = id;
+  document.getElementById('modal-item-title').textContent = 'Edit Price Item';
+  document.getElementById('fi-name').value = item.name;
+  document.getElementById('fi-unit').value = item.unit;
+  document.getElementById('fi-std').value  = item.standard_price;
+  document.getElementById('fi-prm').value  = item.premium_price;
+  document.getElementById('fi-ult').value  = item.ultimate_price;
+  openModal('modal-item');
+}
+
+async function saveItem() {
+  const name = document.getElementById('fi-name').value.trim();
+  const unit = document.getElementById('fi-unit').value.trim();
+  const std  = parseFloat(document.getElementById('fi-std').value);
+  const prm  = parseFloat(document.getElementById('fi-prm').value);
+  const ult  = parseFloat(document.getElementById('fi-ult').value);
+
+  if (!name || !unit || isNaN(std) || isNaN(prm) || isNaN(ult)) {
+    toast('Please fill in all fields.', 'error'); return;
+  }
+  if (std < 0 || prm < 0 || ult < 0) {
+    toast('Prices must be non-negative.', 'error'); return;
+  }
+
+  const payload = { name, unit, standard_price: std, premium_price: prm, ultimate_price: ult };
+  const { error } = editingId
+    ? await sb.from('price_items').update(payload).eq('id', editingId)
+    : await sb.from('price_items').insert(payload);
+
+  if (error) { toast(error.message, 'error'); return; }
+  toast(editingId ? 'Item updated.' : 'Item added.', 'success');
+  closeModal('modal-item');
+  await loadPriceItems();
+}
+
+async function deleteItem(id) {
+  if (!confirm('Delete this price item?')) return;
+  const { error } = await sb.from('price_items').delete().eq('id', id);
+  if (error) { toast(error.message, 'error'); return; }
+  toast('Item deleted.', 'success');
+  await loadPriceItems();
+}
+
+// ── NEW ESTIMATE ──
+function addLineItem() {
+  const selEl = document.getElementById('item-select');
+  const itemId = selEl.value;
+  const qty    = parseFloat(document.getElementById('item-qty').value);
+
+  if (!itemId) { toast('Select an item first.', 'error'); return; }
+  if (!qty || qty <= 0) { toast('Enter a valid quantity.', 'error'); return; }
+
+  const item = priceItems.find(p => p.id === itemId);
+  if (!item) return;
+
+  const existing = lineItems.find(li => li.itemId === itemId);
+  if (existing) {
+    existing.qty = parseFloat((existing.qty + qty).toFixed(4));
+    toast(`Quantity updated for ${item.name}.`, 'info');
+  } else {
+    lineItems.push({
+      tid: ++tempId,
+      itemId: item.id,
+      name: item.name,
+      unit: item.unit,
+      qty,
+      stdP: item.standard_price,
+      prmP: item.premium_price,
+      ultP: item.ultimate_price
+    });
+  }
+
+  selEl.value = '';
+  document.getElementById('item-qty').value = '';
+  renderLineItems();
+}
+
+function removeLineItem(tid) {
+  lineItems = lineItems.filter(li => li.tid !== tid);
+  renderLineItems();
+}
+
+function qtyChange(tid, val) {
+  const li = lineItems.find(l => l.tid === tid);
+  if (li) { li.qty = parseFloat(val) || 0; updateTotals(); }
+}
+
+function renderLineItems() {
+  const wrap = document.getElementById('line-items-wrap');
+  if (!wrap) return;
+
+  if (lineItems.length === 0) {
+    wrap.innerHTML = `<div class="card" style="margin-bottom:16px">
+      <div class="empty" style="padding:28px 16px">
+        <div class="empty-icon">📋</div>
+        <div>No items added yet</div>
+        <div class="sm" style="margin-top:4px">Use the dropdown above to add items to this estimate</div>
+      </div>
+    </div>`;
+    updateTotals();
+    return;
+  }
+
+  wrap.innerHTML = `<div class="tbl-wrap" style="margin-bottom:16px">
+    <table>
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Qty</th>
+          <th><span class="badge badge-std">Standard</span></th>
+          <th><span class="badge badge-prm">Premium</span></th>
+          <th><span class="badge badge-ult">Ultimate</span></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${lineItems.map(li => `
+          <tr>
+            <td>
+              <div class="fw6">${esc(li.name)}</div>
+              <div class="sm">${esc(li.unit)}</div>
+            </td>
+            <td>
+              <input type="number" class="qty-input" value="${li.qty}"
+                min="0.01" step="0.01"
+                onchange="qtyChange(${li.tid}, this.value)"
+                oninput="qtyChange(${li.tid}, this.value)">
+            </td>
+            <td style="color:#94a3b8;font-weight:600">$${fmt(li.qty * li.stdP)}</td>
+            <td style="color:#fb923c;font-weight:600">$${fmt(li.qty * li.prmP)}</td>
+            <td style="color:#c084fc;font-weight:600">$${fmt(li.qty * li.ultP)}</td>
+            <td>
+              <button class="icon-btn" onclick="removeLineItem(${li.tid})" title="Remove">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+  updateTotals();
+}
+
+function updateTotals() {
+  const std = lineItems.reduce((s, li) => s + li.qty * li.stdP, 0);
+  const prm = lineItems.reduce((s, li) => s + li.qty * li.prmP, 0);
+  const ult = lineItems.reduce((s, li) => s + li.qty * li.ultP, 0);
+  document.getElementById('tot-std').textContent = '$' + fmt(std);
+  document.getElementById('tot-prm').textContent = '$' + fmt(prm);
+  document.getElementById('tot-ult').textContent = '$' + fmt(ult);
+}
+
+function clearEstimate() {
+  if (lineItems.length > 0 && !confirm('Clear all items from this estimate?')) return;
+  lineItems = [];
+  document.getElementById('est-name').value    = '';
+  document.getElementById('est-address').value = '';
+  document.getElementById('est-notes').value   = '';
+  renderLineItems();
+}
+
+async function saveEstimate() {
+  const customerName = document.getElementById('est-name').value.trim();
+  if (!customerName) { toast('Customer name is required.', 'error'); return; }
+  if (lineItems.length === 0) { toast('Add at least one item.', 'error'); return; }
+
+  const std = lineItems.reduce((s, li) => s + li.qty * li.stdP, 0);
+  const prm = lineItems.reduce((s, li) => s + li.qty * li.prmP, 0);
+  const ult = lineItems.reduce((s, li) => s + li.qty * li.ultP, 0);
+
+  const payload = {
+    customer_name: customerName,
+    address: document.getElementById('est-address').value.trim() || null,
+    notes:   document.getElementById('est-notes').value.trim()   || null,
+    items: lineItems.map(li => ({
+      itemId: li.itemId,
+      name:   li.name,
+      unit:   li.unit,
+      qty:    li.qty,
+      stdP:   li.stdP,
+      prmP:   li.prmP,
+      ultP:   li.ultP
+    })),
+    standard_total: +std.toFixed(2),
+    premium_total:  +prm.toFixed(2),
+    ultimate_total: +ult.toFixed(2)
+  };
+
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  const { error } = await sb.from('estimates').insert(payload);
+  btn.disabled = false;
+
+  if (error) { toast(error.message, 'error'); return; }
+
+  toast('Estimate saved!', 'success');
+  lineItems = [];
+  document.getElementById('est-name').value    = '';
+  document.getElementById('est-address').value = '';
+  document.getElementById('est-notes').value   = '';
+  renderLineItems();
+  await loadEstimates();
+  showTab('estimates');
+}
+
+// ── ESTIMATES LIST ──
+async function loadEstimates() {
+  const { data, error } = await sb.from('estimates').select('*').order('created_at', { ascending: false });
+  if (error) { toast(error.message, 'error'); return; }
+  estimates = data || [];
+  renderEstimates();
+}
+
+function renderEstimates() {
+  const wrap = document.getElementById('estimates-wrap');
+  if (!wrap) return;
+
+  if (estimates.length === 0) {
+    wrap.innerHTML = `<div class="empty"><div class="empty-icon">📄</div>
+      <div>No estimates yet</div>
+      <div class="sm" style="margin-top:4px">Create your first estimate to get started!</div>
+    </div>`;
+    return;
+  }
+
+  wrap.innerHTML = `<div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Date</th>
+          <th>Items</th>
+          <th><span class="badge badge-std">Standard</span></th>
+          <th><span class="badge badge-prm">Premium</span></th>
+          <th><span class="badge badge-ult">Ultimate</span></th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${estimates.map(est => `
+          <tr>
+            <td>
+              <div class="fw6">${esc(est.customer_name)}</div>
+              ${est.address ? `<div class="sm">${esc(est.address)}</div>` : ''}
+            </td>
+            <td class="sm" style="white-space:nowrap">${fmtDate(est.created_at)}</td>
+            <td class="sm">${(est.items||[]).length} item${(est.items||[]).length !== 1 ? 's' : ''}</td>
+            <td style="color:#94a3b8;font-weight:600">$${fmt(est.standard_total)}</td>
+            <td style="color:#fb923c;font-weight:600">$${fmt(est.premium_total)}</td>
+            <td style="color:#c084fc;font-weight:600">$${fmt(est.ultimate_total)}</td>
+            <td>
+              <div style="display:flex;gap:4px">
+                <button class="btn btn-secondary btn-sm" onclick="viewEstimate('${est.id}')">View</button>
+                <button class="icon-btn" title="Delete" onclick="deleteEstimate('${est.id}')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+                    <path d="M10 11v6M14 11v6"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function viewEstimate(id) {
+  const est = estimates.find(e => e.id === id);
+  if (!est) return;
+  viewingEst = est;
+
+  document.getElementById('modal-est-title').textContent = est.customer_name;
+  document.getElementById('modal-est-date').textContent  = fmtDate(est.created_at);
+
+  const items = est.items || [];
+  document.getElementById('modal-est-body').innerHTML = `
+    ${est.address || est.notes ? `
+      <div style="margin-bottom:14px">
+        ${est.address ? `<div class="sm"><strong style="color:var(--muted)">Address:</strong> ${esc(est.address)}</div>` : ''}
+        ${est.notes   ? `<div class="sm" style="margin-top:3px"><strong style="color:var(--muted)">Notes:</strong> ${esc(est.notes)}</div>` : ''}
+      </div><hr>` : ''}
+    <div class="tbl-wrap" style="margin-bottom:16px">
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th><span class="badge badge-std">Standard</span></th>
+            <th><span class="badge badge-prm">Premium</span></th>
+            <th><span class="badge badge-ult">Ultimate</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(li => `
+            <tr>
+              <td>
+                <div class="fw6">${esc(li.name)}</div>
+                <div class="sm">${esc(li.unit)}</div>
+              </td>
+              <td>${li.qty}</td>
+              <td style="color:#94a3b8;font-weight:600">$${fmt(li.qty * li.stdP)}</td>
+              <td style="color:#fb923c;font-weight:600">$${fmt(li.qty * li.prmP)}</td>
+              <td style="color:#c084fc;font-weight:600">$${fmt(li.qty * li.ultP)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="totals-row">
+      <div class="total-card std">
+        <div class="total-lbl">Standard Total</div>
+        <div class="total-amt">$${fmt(est.standard_total)}</div>
+      </div>
+      <div class="total-card prm">
+        <div class="total-lbl">Premium Total</div>
+        <div class="total-amt">$${fmt(est.premium_total)}</div>
+      </div>
+      <div class="total-card ult">
+        <div class="total-lbl">Ultimate Total</div>
+        <div class="total-amt">$${fmt(est.ultimate_total)}</div>
+      </div>
+    </div>`;
+
+  openModal('modal-est');
+}
+
+async function deleteEstimate(id) {
+  if (!confirm('Delete this estimate? This cannot be undone.')) return;
+  const { error } = await sb.from('estimates').delete().eq('id', id);
+  if (error) { toast(error.message, 'error'); return; }
+  toast('Estimate deleted.', 'success');
+  await loadEstimates();
+}
+
+function printEstimate() {
+  if (!viewingEst) return;
+  const est   = viewingEst;
+  const items = est.items || [];
+
+  const rows = items.map(li => `
+    <tr>
+      <td>${esc(li.name)}</td>
+      <td>${esc(li.unit)}</td>
+      <td>${li.qty}</td>
+      <td>$${fmt(li.qty * li.stdP)}</td>
+      <td>$${fmt(li.qty * li.prmP)}</td>
+      <td>$${fmt(li.qty * li.ultP)}</td>
+    </tr>`).join('');
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><title>Estimate — ${esc(est.customer_name)}</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #111; padding: 40px; font-size: 13px; }
+    h1 { font-size: 22px; margin-bottom: 4px; }
+    .sub { color: #666; margin-bottom: 24px; font-size: 13px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+    th { background: #f3f4f6; padding: 8px 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+    td { padding: 8px 12px; border-top: 1px solid #e5e7eb; }
+    .totals { display: flex; gap: 16px; }
+    .tot-box { border: 2px solid #e5e7eb; border-radius: 8px; padding: 14px 20px; flex: 1; text-align: center; }
+    .tot-box.std { border-color: #94a3b8; }
+    .tot-box.prm { border-color: #f97316; }
+    .tot-box.ult { border-color: #a855f7; }
+    .tot-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #666; margin-bottom: 4px; }
+    .tot-amt { font-size: 22px; font-weight: 700; }
+    .tot-box.std .tot-amt { color: #475569; }
+    .tot-box.prm .tot-amt { color: #ea580c; }
+    .tot-box.ult .tot-amt { color: #9333ea; }
+    .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+    .logo { font-size: 18px; font-weight: 700; color: #f97316; }
+  </style>
+  </head><body>
+  <div class="header-row">
+    <div>
+      <div class="logo">🏠 RoofQuote Pro</div>
+      <div class="sub">Roofing Estimate</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:11px;color:#666">Date</div>
+      <div>${fmtDate(est.created_at)}</div>
+    </div>
+  </div>
+  <h1>${esc(est.customer_name)}</h1>
+  ${est.address ? `<div class="sub">${esc(est.address)}</div>` : '<div class="sub" style="margin-bottom:24px"></div>'}
+  ${est.notes ? `<p style="margin-bottom:16px;color:#444;font-size:13px">${esc(est.notes)}</p>` : ''}
+  <table>
+    <thead><tr><th>Item</th><th>Unit</th><th>Qty</th><th>Standard</th><th>Premium</th><th>Ultimate</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="totals">
+    <div class="tot-box std"><div class="tot-lbl">Standard Total</div><div class="tot-amt">$${fmt(est.standard_total)}</div></div>
+    <div class="tot-box prm"><div class="tot-lbl">Premium Total</div><div class="tot-amt">$${fmt(est.premium_total)}</div></div>
+    <div class="tot-box ult"><div class="tot-lbl">Ultimate Total</div><div class="tot-amt">$${fmt(est.ultimate_total)}</div></div>
+  </div>
+  <script>window.onload=()=>{ window.print(); }<\/script>
+  </body></html>`);
+  win.document.close();
+}
+
+// ── UI HELPERS ──
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  document.querySelector(`[data-tab="${id}"]`).classList.add('active');
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// Close modal when clicking overlay backdrop
+document.querySelectorAll('.overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id); });
+});
+
+function toast(msg, type = 'info') {
+  const icons = { success: '✓', error: '✗', info: 'i' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span style="font-weight:800;font-size:13px">${icons[type]}</span><span>${esc(msg)}</span>`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+function fmt(n) {
+  return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtDate(iso) {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = String(str ?? '');
+  return d.innerHTML;
+}
+
+// Keyboard: Escape closes modals
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));
+  }
+});
+
+init();
+</script>
+</body>
+</html>
