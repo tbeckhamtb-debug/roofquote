@@ -73,13 +73,13 @@
       text-align: center; padding: 32px 16px;
     }
     #setup h2 { font-size: 22px; margin-bottom: 8px; }
-    #setup p { color: var(--muted); max-width: 580px; margin-bottom: 20px; }
+    #setup p { color: var(--muted); max-width: 600px; margin-bottom: 20px; }
     .code-block {
       background: #0a1020; border: 1px solid var(--border);
       border-radius: var(--r); padding: 18px 20px;
       text-align: left; font-family: 'Courier New', monospace;
       font-size: 12px; white-space: pre; overflow-x: auto;
-      max-width: 680px; width: 100%; margin-bottom: 20px;
+      max-width: 700px; width: 100%; margin-bottom: 20px;
       color: #7dd3fc; line-height: 1.7;
     }
 
@@ -155,8 +155,9 @@
     .badge {
       display: inline-flex; align-items: center;
       padding: 2px 8px; border-radius: 4px;
-      font-size: 11px; font-weight: 600;
+      font-size: 11px; font-weight: 600; white-space: nowrap;
     }
+    .badge-all { background: rgba(34,197,94,.15); color: #4ade80; }
     .badge-std { background: rgba(148,163,184,.15); color: #94a3b8; }
     .badge-prm { background: rgba(249,115,22,.15); color: #fb923c; }
     .badge-ult { background: rgba(168,85,247,.15); color: #c084fc; }
@@ -173,7 +174,8 @@
     .total-card.std { border-top: 3px solid #94a3b8; }
     .total-card.prm { border-top: 3px solid #f97316; }
     .total-card.ult { border-top: 3px solid #a855f7; }
-    .total-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 4px; }
+    .total-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 2px; }
+    .total-sub { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
     .total-amt { font-size: 26px; font-weight: 700; }
     .total-card.std .total-amt { color: #94a3b8; }
     .total-card.prm .total-amt { color: #fb923c; }
@@ -189,9 +191,9 @@
     .modal {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--r-lg); padding: 24px;
-      width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto;
+      width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
     }
-    .modal-lg { max-width: 780px; }
+    .modal-lg { max-width: 800px; }
     .modal-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
     .modal-title { font-size: 17px; font-weight: 600; }
     .modal-foot { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
@@ -211,9 +213,7 @@
     @keyframes slideIn { from { transform: translateX(110%); opacity: 0; } to { transform: none; opacity: 1; } }
 
     /* ── MISC ── */
-    .empty {
-      text-align: center; padding: 48px 16px; color: var(--muted);
-    }
+    .empty { text-align: center; padding: 48px 16px; color: var(--muted); }
     .empty-icon { font-size: 42px; margin-bottom: 10px; }
     hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
     .fw6 { font-weight: 600; }
@@ -232,7 +232,23 @@
     }
     .add-item-row .form-group { margin-bottom: 0; flex: 1; min-width: 160px; }
     .add-item-row .form-group:last-child { flex: 0 0 auto; }
-    .est-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 3px; }
+
+    /* ── TIER HINT BOX ── */
+    .tier-hint {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 10px 13px;
+      font-size: 12px; color: var(--muted); margin-top: 6px;
+    }
+
+    /* ── APPLIES-TO PILLS ── */
+    .applies-dots { display: flex; gap: 4px; align-items: center; }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%; opacity: .35;
+    }
+    .dot.active { opacity: 1; }
+    .dot.s { background: #94a3b8; }
+    .dot.p { background: #fb923c; }
+    .dot.u { background: #c084fc; }
   </style>
 </head>
 <body>
@@ -243,7 +259,7 @@
     <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
   </svg>
   <h2>Database Setup Required</h2>
-  <p>Run the SQL below in your <strong>Supabase SQL Editor</strong> to create the required tables, then click the button.</p>
+  <p>Run the SQL below in your <strong>Supabase SQL Editor → New Query</strong>, then click the button.</p>
   <div class="code-block" id="setup-sql"></div>
   <button class="btn btn-primary btn-lg" onclick="retrySetup()">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
@@ -304,16 +320,27 @@
             <tr>
               <th>Name</th>
               <th>Unit</th>
-              <th><span class="badge badge-std">Standard</span></th>
-              <th><span class="badge badge-prm">Premium</span></th>
-              <th><span class="badge badge-ult">Ultimate</span></th>
+              <th>Tier Assignment</th>
+              <th>Price</th>
               <th></th>
             </tr>
           </thead>
           <tbody id="price-tbody">
-            <tr><td colspan="6"><div class="empty"><div class="empty-icon">⏳</div>Loading…</div></td></tr>
+            <tr><td colspan="5"><div class="empty"><div class="empty-icon">⏳</div>Loading…</div></td></tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Legend -->
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;padding:0 2px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
+          <span class="badge badge-all">All Tiers</span> Included in every package at same price
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
+          <span class="badge badge-std">Standard</span>
+          <span class="badge badge-prm">Premium</span>
+          <span class="badge badge-ult">Ultimate</span> Tier-specific items
+        </div>
       </div>
     </div>
 
@@ -329,7 +356,7 @@
 
       <!-- Customer info -->
       <div class="card" style="margin-bottom:16px">
-        <div style="font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px">Customer Information</div>
+        <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px">Customer Information</div>
         <div class="grid-2">
           <div class="form-group">
             <label>Customer Name *</label>
@@ -373,15 +400,18 @@
       <!-- Totals -->
       <div class="totals-row">
         <div class="total-card std">
-          <div class="total-lbl">Standard Total</div>
+          <div class="total-lbl">Standard Package</div>
+          <div class="total-sub" id="tot-std-sub">All Tiers + Standard Only</div>
           <div class="total-amt" id="tot-std">$0.00</div>
         </div>
         <div class="total-card prm">
-          <div class="total-lbl">Premium Total</div>
+          <div class="total-lbl">Premium Package</div>
+          <div class="total-sub" id="tot-prm-sub">All Tiers + Premium Only</div>
           <div class="total-amt" id="tot-prm">$0.00</div>
         </div>
         <div class="total-card ult">
-          <div class="total-lbl">Ultimate Total</div>
+          <div class="total-lbl">Ultimate Package</div>
+          <div class="total-sub" id="tot-ult-sub">All Tiers + Ultimate Only</div>
           <div class="total-amt" id="tot-ult">$0.00</div>
         </div>
       </div>
@@ -420,6 +450,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
+
     <div class="grid-2">
       <div class="form-group">
         <label>Item Name *</label>
@@ -430,20 +461,25 @@
         <input type="text" id="fi-unit" placeholder="e.g. sq, hr, lin ft">
       </div>
     </div>
-    <div class="grid-3">
-      <div class="form-group">
-        <label>Standard Price *</label>
-        <input type="number" id="fi-std" placeholder="0.00" min="0" step="0.01">
-      </div>
-      <div class="form-group">
-        <label>Premium Price *</label>
-        <input type="number" id="fi-prm" placeholder="0.00" min="0" step="0.01">
-      </div>
-      <div class="form-group">
-        <label>Ultimate Price *</label>
-        <input type="number" id="fi-ult" placeholder="0.00" min="0" step="0.01">
+
+    <div class="form-group">
+      <label>Tier Assignment *</label>
+      <select id="fi-tier" onchange="onTierChange()">
+        <option value="all">All Tiers — included in every package</option>
+        <option value="standard">Standard Only</option>
+        <option value="premium">Premium Only</option>
+        <option value="ultimate">Ultimate Only</option>
+      </select>
+      <div class="tier-hint" id="tier-hint">
+        This item will be added to <strong>Standard, Premium, and Ultimate</strong> totals at the same price. Use for shared costs like labor, tear-off, nails, and dump fees.
       </div>
     </div>
+
+    <div class="form-group" style="margin-bottom:0">
+      <label id="fi-price-label">Price per Unit *</label>
+      <input type="number" id="fi-price" placeholder="0.00" min="0" step="0.01">
+    </div>
+
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal('modal-item')">Cancel</button>
       <button class="btn btn-primary" onclick="saveItem()">
@@ -484,16 +520,25 @@ const SUPABASE_URL = 'https://vrwhubcrcikyssprlscn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyd2h1YmNyY2lreXNzcHJsc2NuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MjM3NDQsImV4cCI6MjA5MTQ5OTc0NH0.SAvVivna6oNYSeIVezHaCf93xVS-Jb3ZRde4xAUBJf8';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const SETUP_SQL = `-- Run this in Supabase SQL Editor → New Query
+// ── TIER CONFIG ──
+const TIERS = {
+  all:      { label: 'All Tiers',     badge: 'badge-all', hint: 'Included in <strong>Standard, Premium, and Ultimate</strong> at the same price. Use for shared costs like labor, tear-off, nails, and dump fees.' },
+  standard: { label: 'Standard Only', badge: 'badge-std', hint: 'Only added to the <strong>Standard</strong> package total.' },
+  premium:  { label: 'Premium Only',  badge: 'badge-prm', hint: 'Only added to the <strong>Premium</strong> package total.' },
+  ultimate: { label: 'Ultimate Only', badge: 'badge-ult', hint: 'Only added to the <strong>Ultimate</strong> package total.' },
+};
 
+const SETUP_SQL =
+`-- ═══════════════════════════════════════════
+--  FRESH INSTALL  (tables don't exist yet)
+-- ═══════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS price_items (
-  id             uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  name           text NOT NULL,
-  unit           text NOT NULL,
-  standard_price numeric(10,2) NOT NULL DEFAULT 0,
-  premium_price  numeric(10,2) NOT NULL DEFAULT 0,
-  ultimate_price numeric(10,2) NOT NULL DEFAULT 0,
-  created_at     timestamptz DEFAULT now()
+  id         uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  name       text NOT NULL,
+  unit       text NOT NULL,
+  tier       text NOT NULL DEFAULT 'all',
+  price      numeric(10,2) NOT NULL DEFAULT 0,
+  created_at timestamptz DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS estimates (
@@ -510,14 +555,21 @@ CREATE TABLE IF NOT EXISTS estimates (
 
 ALTER TABLE price_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE estimates   ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "public_all" ON price_items FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "public_all" ON estimates   FOR ALL USING (true) WITH CHECK (true);`;
+CREATE POLICY "public_all" ON estimates   FOR ALL USING (true) WITH CHECK (true);
+
+-- ═══════════════════════════════════════════
+--  UPGRADING FROM PREVIOUS VERSION?
+--  Run these too if tables already exist:
+-- ═══════════════════════════════════════════
+-- ALTER TABLE price_items ADD COLUMN IF NOT EXISTS tier  text DEFAULT 'all';
+-- ALTER TABLE price_items ADD COLUMN IF NOT EXISTS price numeric(10,2) DEFAULT 0;
+-- UPDATE price_items SET tier='all', price=COALESCE(standard_price,0) WHERE price=0;`;
 
 // ── STATE ──
 let priceItems = [];
 let estimates  = [];
-let lineItems  = [];   // current estimate being built
+let lineItems  = [];
 let editingId  = null;
 let viewingEst = null;
 let tempId     = 0;
@@ -553,7 +605,7 @@ async function retrySetup() {
     renderLineItems();
   } else {
     document.getElementById('setup-err').textContent =
-      'Tables not found yet. Make sure you ran all the SQL and clicked Save/Run.';
+      'Tables not found yet. Make sure you ran all the SQL and clicked Run.';
   }
 }
 
@@ -566,27 +618,38 @@ async function loadPriceItems() {
   populateSelect();
 }
 
+function getItemPrice(item) {
+  // Support both new (price) and old (standard_price) schema
+  return item.price ?? item.standard_price ?? 0;
+}
+
+function getItemTier(item) {
+  return item.tier ?? 'all';
+}
+
 function renderPriceItems() {
-  const q = document.getElementById('price-search')?.value.toLowerCase() ?? '';
+  const q = (document.getElementById('price-search')?.value ?? '').toLowerCase();
   const rows = priceItems.filter(i => !q || i.name.toLowerCase().includes(q));
   const tbody = document.getElementById('price-tbody');
   if (!tbody) return;
 
   if (rows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty">
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty">
       <div class="empty-icon">${q ? '🔍' : '📋'}</div>
       <div>${q ? 'No items match your search.' : 'No items yet — add your first price item!'}</div>
     </div></td></tr>`;
     return;
   }
 
-  tbody.innerHTML = rows.map(item => `
-    <tr>
+  tbody.innerHTML = rows.map(item => {
+    const tier = getItemTier(item);
+    const cfg  = TIERS[tier] || TIERS.all;
+    const price = getItemPrice(item);
+    return `<tr>
       <td class="fw6">${esc(item.name)}</td>
       <td><span class="pill">${esc(item.unit)}</span></td>
-      <td style="color:#94a3b8;font-weight:600">$${fmt(item.standard_price)}</td>
-      <td style="color:#fb923c;font-weight:600">$${fmt(item.premium_price)}</td>
-      <td style="color:#c084fc;font-weight:600">$${fmt(item.ultimate_price)}</td>
+      <td><span class="badge ${cfg.badge}">${cfg.label}</span></td>
+      <td class="fw6">$${fmt(price)}</td>
       <td>
         <div style="display:flex;gap:4px">
           <button class="btn btn-secondary btn-sm" onclick="openEditItem('${item.id}')">Edit</button>
@@ -598,22 +661,49 @@ function renderPriceItems() {
           </button>
         </div>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function populateSelect() {
   const sel = document.getElementById('item-select');
   if (!sel) return;
   const cur = sel.value;
-  sel.innerHTML = '<option value="">— choose an item —</option>' +
-    priceItems.map(i => `<option value="${i.id}">${esc(i.name)} / ${esc(i.unit)}</option>`).join('');
+
+  // Group by tier for better UX
+  const groups = { all: [], standard: [], premium: [], ultimate: [] };
+  priceItems.forEach(i => { const t = getItemTier(i); (groups[t] || groups.all).push(i); });
+
+  const groupLabels = { all: 'All Tiers', standard: 'Standard Only', premium: 'Premium Only', ultimate: 'Ultimate Only' };
+  let html = '<option value="">— choose an item —</option>';
+  for (const [key, items] of Object.entries(groups)) {
+    if (!items.length) continue;
+    html += `<optgroup label="${groupLabels[key]}">`;
+    items.forEach(i => {
+      html += `<option value="${i.id}">${esc(i.name)} (${esc(i.unit)}) — $${fmt(getItemPrice(i))}</option>`;
+    });
+    html += '</optgroup>';
+  }
+  sel.innerHTML = html;
   if (cur) sel.value = cur;
+}
+
+// ── TIER HINT (modal) ──
+function onTierChange() {
+  const tier = document.getElementById('fi-tier').value;
+  const cfg  = TIERS[tier] || TIERS.all;
+  document.getElementById('tier-hint').innerHTML = cfg.hint;
+  document.getElementById('fi-price-label').textContent = 'Price per Unit *';
 }
 
 function openAddItem() {
   editingId = null;
   document.getElementById('modal-item-title').textContent = 'Add Price Item';
-  ['fi-name','fi-unit','fi-std','fi-prm','fi-ult'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fi-name').value  = '';
+  document.getElementById('fi-unit').value  = '';
+  document.getElementById('fi-tier').value  = 'all';
+  document.getElementById('fi-price').value = '';
+  onTierChange();
   openModal('modal-item');
   document.getElementById('fi-name').focus();
 }
@@ -623,29 +713,26 @@ function openEditItem(id) {
   if (!item) return;
   editingId = id;
   document.getElementById('modal-item-title').textContent = 'Edit Price Item';
-  document.getElementById('fi-name').value = item.name;
-  document.getElementById('fi-unit').value = item.unit;
-  document.getElementById('fi-std').value  = item.standard_price;
-  document.getElementById('fi-prm').value  = item.premium_price;
-  document.getElementById('fi-ult').value  = item.ultimate_price;
+  document.getElementById('fi-name').value  = item.name;
+  document.getElementById('fi-unit').value  = item.unit;
+  document.getElementById('fi-tier').value  = getItemTier(item);
+  document.getElementById('fi-price').value = getItemPrice(item);
+  onTierChange();
   openModal('modal-item');
 }
 
 async function saveItem() {
-  const name = document.getElementById('fi-name').value.trim();
-  const unit = document.getElementById('fi-unit').value.trim();
-  const std  = parseFloat(document.getElementById('fi-std').value);
-  const prm  = parseFloat(document.getElementById('fi-prm').value);
-  const ult  = parseFloat(document.getElementById('fi-ult').value);
+  const name  = document.getElementById('fi-name').value.trim();
+  const unit  = document.getElementById('fi-unit').value.trim();
+  const tier  = document.getElementById('fi-tier').value;
+  const price = parseFloat(document.getElementById('fi-price').value);
 
-  if (!name || !unit || isNaN(std) || isNaN(prm) || isNaN(ult)) {
-    toast('Please fill in all fields.', 'error'); return;
-  }
-  if (std < 0 || prm < 0 || ult < 0) {
-    toast('Prices must be non-negative.', 'error'); return;
-  }
+  if (!name || !unit) { toast('Name and unit are required.', 'error'); return; }
+  if (isNaN(price) || price < 0) { toast('Enter a valid price.', 'error'); return; }
 
-  const payload = { name, unit, standard_price: std, premium_price: prm, ultimate_price: ult };
+  // Write to both new (price) and old (standard_price) columns for compatibility
+  const payload = { name, unit, tier, price, standard_price: price, premium_price: price, ultimate_price: price };
+
   const { error } = editingId
     ? await sb.from('price_items').update(payload).eq('id', editingId)
     : await sb.from('price_items').insert(payload);
@@ -666,7 +753,7 @@ async function deleteItem(id) {
 
 // ── NEW ESTIMATE ──
 function addLineItem() {
-  const selEl = document.getElementById('item-select');
+  const selEl  = document.getElementById('item-select');
   const itemId = selEl.value;
   const qty    = parseFloat(document.getElementById('item-qty').value);
 
@@ -682,14 +769,13 @@ function addLineItem() {
     toast(`Quantity updated for ${item.name}.`, 'info');
   } else {
     lineItems.push({
-      tid: ++tempId,
+      tid:    ++tempId,
       itemId: item.id,
-      name: item.name,
-      unit: item.unit,
+      name:   item.name,
+      unit:   item.unit,
+      tier:   getItemTier(item),
       qty,
-      stdP: item.standard_price,
-      prmP: item.premium_price,
-      ultP: item.ultimate_price
+      price:  getItemPrice(item),
     });
   }
 
@@ -706,6 +792,17 @@ function removeLineItem(tid) {
 function qtyChange(tid, val) {
   const li = lineItems.find(l => l.tid === tid);
   if (li) { li.qty = parseFloat(val) || 0; updateTotals(); }
+}
+
+function tierDots(tier) {
+  const s = (tier === 'all' || tier === 'standard') ? 'active' : '';
+  const p = (tier === 'all' || tier === 'premium')  ? 'active' : '';
+  const u = (tier === 'all' || tier === 'ultimate') ? 'active' : '';
+  return `<div class="applies-dots" title="Applies to: ${TIERS[tier]?.label}">
+    <div class="dot s ${s}" title="Standard"></div>
+    <div class="dot p ${p}" title="Premium"></div>
+    <div class="dot u ${u}" title="Ultimate"></div>
+  </div>`;
 }
 
 function renderLineItems() {
@@ -729,29 +826,32 @@ function renderLineItems() {
       <thead>
         <tr>
           <th>Item</th>
+          <th>Tier</th>
           <th>Qty</th>
-          <th><span class="badge badge-std">Standard</span></th>
-          <th><span class="badge badge-prm">Premium</span></th>
-          <th><span class="badge badge-ult">Ultimate</span></th>
+          <th>Unit Price</th>
+          <th>Line Total</th>
+          <th title="S = Standard  P = Premium  U = Ultimate">S · P · U</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
-        ${lineItems.map(li => `
-          <tr>
+        ${lineItems.map(li => {
+          const cfg = TIERS[li.tier] || TIERS.all;
+          return `<tr>
             <td>
               <div class="fw6">${esc(li.name)}</div>
               <div class="sm">${esc(li.unit)}</div>
             </td>
+            <td><span class="badge ${cfg.badge}">${cfg.label}</span></td>
             <td>
               <input type="number" class="qty-input" value="${li.qty}"
                 min="0.01" step="0.01"
                 onchange="qtyChange(${li.tid}, this.value)"
                 oninput="qtyChange(${li.tid}, this.value)">
             </td>
-            <td style="color:#94a3b8;font-weight:600">$${fmt(li.qty * li.stdP)}</td>
-            <td style="color:#fb923c;font-weight:600">$${fmt(li.qty * li.prmP)}</td>
-            <td style="color:#c084fc;font-weight:600">$${fmt(li.qty * li.ultP)}</td>
+            <td>$${fmt(li.price)}</td>
+            <td class="fw6">$${fmt(li.qty * li.price)}</td>
+            <td>${tierDots(li.tier)}</td>
             <td>
               <button class="icon-btn" onclick="removeLineItem(${li.tid})" title="Remove">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -759,17 +859,23 @@ function renderLineItems() {
                 </svg>
               </button>
             </td>
-          </tr>`).join('')}
+          </tr>`;
+        }).join('')}
       </tbody>
     </table>
   </div>`;
   updateTotals();
 }
 
+function calcTotals(items) {
+  const std = items.reduce((s, li) => s + (li.tier === 'all' || li.tier === 'standard' ? li.qty * li.price : 0), 0);
+  const prm = items.reduce((s, li) => s + (li.tier === 'all' || li.tier === 'premium'  ? li.qty * li.price : 0), 0);
+  const ult = items.reduce((s, li) => s + (li.tier === 'all' || li.tier === 'ultimate' ? li.qty * li.price : 0), 0);
+  return { std, prm, ult };
+}
+
 function updateTotals() {
-  const std = lineItems.reduce((s, li) => s + li.qty * li.stdP, 0);
-  const prm = lineItems.reduce((s, li) => s + li.qty * li.prmP, 0);
-  const ult = lineItems.reduce((s, li) => s + li.qty * li.ultP, 0);
+  const { std, prm, ult } = calcTotals(lineItems);
   document.getElementById('tot-std').textContent = '$' + fmt(std);
   document.getElementById('tot-prm').textContent = '$' + fmt(prm);
   document.getElementById('tot-ult').textContent = '$' + fmt(ult);
@@ -789,26 +895,16 @@ async function saveEstimate() {
   if (!customerName) { toast('Customer name is required.', 'error'); return; }
   if (lineItems.length === 0) { toast('Add at least one item.', 'error'); return; }
 
-  const std = lineItems.reduce((s, li) => s + li.qty * li.stdP, 0);
-  const prm = lineItems.reduce((s, li) => s + li.qty * li.prmP, 0);
-  const ult = lineItems.reduce((s, li) => s + li.qty * li.ultP, 0);
+  const { std, prm, ult } = calcTotals(lineItems);
 
   const payload = {
-    customer_name: customerName,
-    address: document.getElementById('est-address').value.trim() || null,
-    notes:   document.getElementById('est-notes').value.trim()   || null,
-    items: lineItems.map(li => ({
-      itemId: li.itemId,
-      name:   li.name,
-      unit:   li.unit,
-      qty:    li.qty,
-      stdP:   li.stdP,
-      prmP:   li.prmP,
-      ultP:   li.ultP
-    })),
+    customer_name:  customerName,
+    address:        document.getElementById('est-address').value.trim() || null,
+    notes:          document.getElementById('est-notes').value.trim()   || null,
+    items: lineItems.map(({ tid, ...rest }) => rest),
     standard_total: +std.toFixed(2),
     premium_total:  +prm.toFixed(2),
-    ultimate_total: +ult.toFixed(2)
+    ultimate_total: +ult.toFixed(2),
   };
 
   const btn = document.getElementById('save-btn');
@@ -895,10 +991,29 @@ function viewEstimate(id) {
   if (!est) return;
   viewingEst = est;
 
+  const items = est.items || [];
+  const { std, prm, ult } = calcTotals(items);
+
+  // Build line items grouped visually
+  const rows = items.map(li => {
+    const tier = li.tier || 'all';
+    const cfg  = TIERS[tier] || TIERS.all;
+    return `<tr>
+      <td>
+        <div class="fw6">${esc(li.name)}</div>
+        <div class="sm">${esc(li.unit)}</div>
+      </td>
+      <td><span class="badge ${cfg.badge}">${cfg.label}</span></td>
+      <td>${li.qty}</td>
+      <td>$${fmt(li.price)}</td>
+      <td class="fw6">$${fmt(li.qty * li.price)}</td>
+      <td>${tierDots(tier)}</td>
+    </tr>`;
+  }).join('');
+
   document.getElementById('modal-est-title').textContent = est.customer_name;
   document.getElementById('modal-est-date').textContent  = fmtDate(est.created_at);
 
-  const items = est.items || [];
   document.getElementById('modal-est-body').innerHTML = `
     ${est.address || est.notes ? `
       <div style="margin-bottom:14px">
@@ -910,38 +1025,30 @@ function viewEstimate(id) {
         <thead>
           <tr>
             <th>Item</th>
+            <th>Tier</th>
             <th>Qty</th>
-            <th><span class="badge badge-std">Standard</span></th>
-            <th><span class="badge badge-prm">Premium</span></th>
-            <th><span class="badge badge-ult">Ultimate</span></th>
+            <th>Unit Price</th>
+            <th>Line Total</th>
+            <th title="S=Standard P=Premium U=Ultimate">S · P · U</th>
           </tr>
         </thead>
-        <tbody>
-          ${items.map(li => `
-            <tr>
-              <td>
-                <div class="fw6">${esc(li.name)}</div>
-                <div class="sm">${esc(li.unit)}</div>
-              </td>
-              <td>${li.qty}</td>
-              <td style="color:#94a3b8;font-weight:600">$${fmt(li.qty * li.stdP)}</td>
-              <td style="color:#fb923c;font-weight:600">$${fmt(li.qty * li.prmP)}</td>
-              <td style="color:#c084fc;font-weight:600">$${fmt(li.qty * li.ultP)}</td>
-            </tr>`).join('')}
-        </tbody>
+        <tbody>${rows}</tbody>
       </table>
     </div>
     <div class="totals-row">
       <div class="total-card std">
-        <div class="total-lbl">Standard Total</div>
+        <div class="total-lbl">Standard Package</div>
+        <div class="total-sub">All Tiers + Standard Only</div>
         <div class="total-amt">$${fmt(est.standard_total)}</div>
       </div>
       <div class="total-card prm">
-        <div class="total-lbl">Premium Total</div>
+        <div class="total-lbl">Premium Package</div>
+        <div class="total-sub">All Tiers + Premium Only</div>
         <div class="total-amt">$${fmt(est.premium_total)}</div>
       </div>
       <div class="total-card ult">
-        <div class="total-lbl">Ultimate Total</div>
+        <div class="total-lbl">Ultimate Package</div>
+        <div class="total-sub">All Tiers + Ultimate Only</div>
         <div class="total-amt">$${fmt(est.ultimate_total)}</div>
       </div>
     </div>`;
@@ -962,14 +1069,15 @@ function printEstimate() {
   const est   = viewingEst;
   const items = est.items || [];
 
+  const tierLabel = { all: 'All Tiers', standard: 'Standard Only', premium: 'Premium Only', ultimate: 'Ultimate Only' };
   const rows = items.map(li => `
     <tr>
       <td>${esc(li.name)}</td>
       <td>${esc(li.unit)}</td>
+      <td>${esc(tierLabel[li.tier] || 'All Tiers')}</td>
       <td>${li.qty}</td>
-      <td>$${fmt(li.qty * li.stdP)}</td>
-      <td>$${fmt(li.qty * li.prmP)}</td>
-      <td>$${fmt(li.qty * li.ultP)}</td>
+      <td>$${fmt(li.price)}</td>
+      <td>$${fmt(li.qty * li.price)}</td>
     </tr>`).join('');
 
   const win = window.open('', '_blank');
@@ -986,36 +1094,46 @@ function printEstimate() {
     .tot-box.std { border-color: #94a3b8; }
     .tot-box.prm { border-color: #f97316; }
     .tot-box.ult { border-color: #a855f7; }
-    .tot-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #666; margin-bottom: 4px; }
+    .tot-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #666; margin-bottom: 2px; }
+    .tot-sub { font-size: 11px; color: #999; margin-bottom: 6px; }
     .tot-amt { font-size: 22px; font-weight: 700; }
     .tot-box.std .tot-amt { color: #475569; }
     .tot-box.prm .tot-amt { color: #ea580c; }
     .tot-box.ult .tot-amt { color: #9333ea; }
     .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
     .logo { font-size: 18px; font-weight: 700; color: #f97316; }
-  </style>
-  </head><body>
+    .tier-all { color: #16a34a; }
+    .tier-standard { color: #475569; }
+    .tier-premium { color: #ea580c; }
+    .tier-ultimate { color: #9333ea; }
+  </style></head><body>
   <div class="header-row">
-    <div>
-      <div class="logo">🏠 RoofQuote Pro</div>
-      <div class="sub">Roofing Estimate</div>
-    </div>
-    <div style="text-align:right">
-      <div style="font-size:11px;color:#666">Date</div>
-      <div>${fmtDate(est.created_at)}</div>
-    </div>
+    <div><div class="logo">🏠 RoofQuote Pro</div><div class="sub">Roofing Estimate</div></div>
+    <div style="text-align:right"><div style="font-size:11px;color:#666">Date</div><div>${fmtDate(est.created_at)}</div></div>
   </div>
   <h1>${esc(est.customer_name)}</h1>
-  ${est.address ? `<div class="sub">${esc(est.address)}</div>` : '<div class="sub" style="margin-bottom:24px"></div>'}
-  ${est.notes ? `<p style="margin-bottom:16px;color:#444;font-size:13px">${esc(est.notes)}</p>` : ''}
+  ${est.address ? `<div class="sub">${esc(est.address)}</div>` : '<div style="margin-bottom:24px"></div>'}
+  ${est.notes ? `<p style="margin-bottom:16px;color:#444">${esc(est.notes)}</p>` : ''}
   <table>
-    <thead><tr><th>Item</th><th>Unit</th><th>Qty</th><th>Standard</th><th>Premium</th><th>Ultimate</th></tr></thead>
+    <thead><tr><th>Item</th><th>Unit</th><th>Tier</th><th>Qty</th><th>Unit Price</th><th>Line Total</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
   <div class="totals">
-    <div class="tot-box std"><div class="tot-lbl">Standard Total</div><div class="tot-amt">$${fmt(est.standard_total)}</div></div>
-    <div class="tot-box prm"><div class="tot-lbl">Premium Total</div><div class="tot-amt">$${fmt(est.premium_total)}</div></div>
-    <div class="tot-box ult"><div class="tot-lbl">Ultimate Total</div><div class="tot-amt">$${fmt(est.ultimate_total)}</div></div>
+    <div class="tot-box std">
+      <div class="tot-lbl">Standard Package</div>
+      <div class="tot-sub">All Tiers + Standard Only</div>
+      <div class="tot-amt">$${fmt(est.standard_total)}</div>
+    </div>
+    <div class="tot-box prm">
+      <div class="tot-lbl">Premium Package</div>
+      <div class="tot-sub">All Tiers + Premium Only</div>
+      <div class="tot-amt">$${fmt(est.premium_total)}</div>
+    </div>
+    <div class="tot-box ult">
+      <div class="tot-lbl">Ultimate Package</div>
+      <div class="tot-sub">All Tiers + Ultimate Only</div>
+      <div class="tot-amt">$${fmt(est.ultimate_total)}</div>
+    </div>
   </div>
   <script>window.onload=()=>{ window.print(); }<\/script>
   </body></html>`);
@@ -1033,7 +1151,6 @@ function showTab(id) {
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-// Close modal when clicking overlay backdrop
 document.querySelectorAll('.overlay').forEach(overlay => {
   overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id); });
 });
@@ -1061,11 +1178,8 @@ function esc(str) {
   return d.innerHTML;
 }
 
-// Keyboard: Escape closes modals
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));
-  }
+  if (e.key === 'Escape') document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));
 });
 
 init();
